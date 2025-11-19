@@ -1,0 +1,119 @@
+#!/bin/sh
+
+CONF="/etc/freeradius3"
+INIT="/etc/init.d/radiusd"
+NAME="radius_manager"
+
+. /lib/functions.sh
+config_load radius_manager
+
+config_get PASSWORD_METHOD general password_storage "ntlm"
+
+generate_password()
+{
+	generate_${PASSWORD_METHOD}_password "$1"
+}
+
+generate_clear_password()
+{
+	echo "Cleartext-Password := \"$1\""
+}
+
+generate_bcrypt_password()
+{
+	python3 -c "import bcrypt; print('Crypt-Password := \"' + bcrypt.hashpw(b'$1', bcrypt.gensalt()).decode() + '\"')"
+}
+
+generate_ntlm_password()
+{
+	python3 -c "import hashlib; print('NT-Password := \"' + hashlib.new('md4', '$1'.encode('utf-16le')).hexdigest().upper() + '\"')"
+}
+
+clear_password()
+{
+	echo "Clearing password for $1"
+	uci -q delete $NAME.$1.clear_password
+	uci -q delete $NAME.$1.bcrypt_password
+	uci -q delete $NAME.$1.ntlm_password
+}
+
+set_password()
+{
+	clear_password $1
+	uci set $NAME.$1.${PASSWORD_METHOD}_password="$2"
+}
+
+keep_password()
+{
+	config_get password $1 clear_password
+	[ ! -z "$password" ] && echo "Cleartext-Password := \"$password\"" && return
+	config_get crypt_password $1 crypt_password
+	[ ! -z "$crypt_password" ] && echo "Crypt-Password := \"$crypt_password\"" && return
+	config_get ntlm_password $1 ntlm_password
+	[ ! -z "$ntlm_password" ] && echo "NT-Password := \"$ntlm_password\"" && return
+	echo ""
+}
+
+rebuild()
+{
+	clear_configure
+	config_foreach append_client client
+	config_foreach append_user user
+	reload_radiusd
+}
+
+clear_configure()
+{
+	echo > $CONF/clients.extra
+	echo > $CONF/authorize.extra
+}
+
+append_client()
+{
+	local name ipaddr secret
+	config_get name $1 name
+	config_get ipaddr $1 ipaddr
+	config_get secret $1 secret
+
+	cat <<-EOF >>$CONF/clients.extra
+client $name {
+	secret = $secret
+	ipaddr = $ipaddr
+	shortname = $name
+}
+EOF
+}
+
+append_user()
+{
+	local username password rad_password
+	config_get username $1 username
+	config_get password $1 password
+
+	if [ -z "$password" ]; then
+		config_get rad_password $1 rad_password ""
+	else
+		rad_password=$(generate_password "$password")
+	fi
+	cat <<-EOF >>$CONF/authorize.extra
+$username	$rad_password
+EOF
+    [ -z "$password" ] && return
+	uci -q delete $NAME.$1.password
+	uci set $NAME.$1.rad_password="$rad_password"
+	uci set $NAME.$1.password_type="$PASSWORD_METHOD"
+	uci set $NAME.$1.password_updated="$(date "+%Y/%m/%d-%H:%M:%S")"
+	uci commit $NAME
+}
+
+reload_radiusd()
+{
+	"$INIT" restart
+}
+
+case "$1" in
+  rebuild)
+    rebuild
+  ;;
+esac
+exit 0

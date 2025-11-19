@@ -1,10 +1,9 @@
-# luci-app-radius
-OpenWrt Radius Server. Easy deployment, Easy management.
-Enterprise-class protection your WiFi security.
+# luci-app-radius-manage
+OpenWrt Radius Server Manager
 
-This is based on the original app from Jason Tse <jasontsecode@gmail.com>
+Forked from https://github.com/jimbolaya/luci-app-radius
 
-I have updated what I can for Freeradius 3. Unlike the original app, this does not create a basic configuration for you. You will want to go through the OpenWRT wiki on Freeradius3 at https://openwrt.org/docs/guide-user/network/wifi/freeradius to configure Freeradius 3 first.
+I have tried to upgrade this project to feature more significant radius management. You will want to go through the OpenWRT wiki on Freeradius3 at https://openwrt.org/docs/guide-user/network/wifi/freeradius to configure Freeradius 3 first.
 
 You will also need to install luci-compat if you're running v21+ (maybe v19+)
 
@@ -19,3 +18,7 @@ and
 `$INCLUDE /etc/freeradius3/authorize.extra`
 
 to the top of `/etc/freeradius3/mods-config/files/authorize`
+
+## Building
+
+I cheated because i felt like it, you can build this separately from the OpenWRT build system using `make TOPDIR=scripts/topdir/ INCLUDE_DIR=scripts/includedir/`.
