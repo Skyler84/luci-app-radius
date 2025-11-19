@@ -10,17 +10,10 @@ o.disabled = 0
 
 s = m:section(TypedSection, "user", nil)
 s.template = "cbi/tblsection"
-s.anonymous = true
 s.addremove = true
+s.extedit = luci.dispatcher.build_url("admin", "services", "radius_manager", "users", "edit", "%s")
 
-o = s:option(Value, "username", translate("Username"))
-o.datatype = "uciname"
-o.rmempty = false
-
-o = s:option(Value, "password", translate("Password"), translate("Leave blank to keep existing password."))
-o.password = true
-o.rmempty = true
-
+s:option(DummyValue, "password", translate("Password"))
 s:option(DummyValue, "password_updated", translate("Password Last Updated"))
 s:option(DummyValue, "password_type", translate("Password Type"))
 

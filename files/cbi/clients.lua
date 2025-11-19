@@ -4,19 +4,11 @@ m = Map("radius_manager", translate("Radius - Clients"), translate("Radius Clien
 
 s = m:section(TypedSection, "client", nil)
 s.template = "cbi/tblsection"
-s.anonymous = true
 s.addremove = true
+s.extedit = luci.dispatcher.build_url("admin", "services", "radius_manager", "clients", "edit", "%s")
 
-o = s:option(Value, "name", translate("Short Name"))
-o.datatype = "uciname"
-o.rmempty = false
+o = s:option(DummyValue, "ipaddr", translate("IP Address"))
 
-o = s:option(Value, "ipaddr", translate("IP Address"))
-o.datatype = "ipaddr"
-o.rmempty = false
-
-o = s:option(Value, "secret", translate("Secret"))
-o.password = true
-o.rmempty = false
+o = s:option(DummyValue, "secret", translate("Secret"))
 
 return m

@@ -122,7 +122,7 @@ EOF
 append_user()
 {
 	local username password rad_password
-	config_get username $1 username
+	username=$1
 	config_get password $1 password
 
 	if [ -z "$password" ]; then

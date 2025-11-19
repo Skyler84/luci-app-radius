@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-radius-manager
 PKG_VERSION:=0.1
-PKG_RELEASE:=1-11
+PKG_RELEASE:=1-12
 PKG_MAINTAINER:=Skyler Mansfield <skyler.mansfield.21@gmail.com>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=LICENSE
