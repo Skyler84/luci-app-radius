@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-radius-manager
 PKG_VERSION:=0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=1-11
 PKG_MAINTAINER:=Skyler Mansfield <skyler.mansfield.21@gmail.com>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=LICENSE
@@ -37,11 +37,15 @@ define Package/luci-app-radius-manager/install
 	$(INSTALL_DATA) ./files/cbi/clients.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/clients.lua
 	$(INSTALL_DATA) ./files/cbi/users.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/users.lua
 	$(INSTALL_DATA) ./files/cbi/realms.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/realms.lua
+	$(INSTALL_DATA) ./files/cbi/servers.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/servers.lua
 	$(INSTALL_DATA) ./files/cbi/settings.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/settings.lua
 endef
 
 define Package/luci-app-radius-manager/postinst
 #!/bin/sh	
+[ ! -z "$${IPKG_INSTROOT}" ] && exit 0
+# check if freeradius authorize file includes our $$INCLUDE already
+
 endef
 
 define Build/Compile

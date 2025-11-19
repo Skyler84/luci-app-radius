@@ -4,6 +4,7 @@ CONF="/etc/freeradius3"
 INIT="/etc/init.d/radiusd"
 NAME="radius_manager"
 
+
 . /lib/functions.sh
 config_load radius_manager
 
@@ -59,13 +60,47 @@ rebuild()
 	clear_configure
 	config_foreach append_client client
 	config_foreach append_user user
+	config_foreach append_realm_format realm_format
 	reload_radiusd
 }
 
 clear_configure()
 {
+	#sed '#^$INCLUDE /etc/radius_manager/authorize.extra #d' /etc/freeradius3/mods-config/files/authorize
 	echo > $CONF/clients.extra
 	echo > $CONF/authorize.extra
+	echo > $CONF/realm.extra
+}
+
+append_realm_format()
+{
+	local name type delimiter
+	config_get name $1 name
+	config_get type $1 type
+	config_get delimiter $1 delimiter
+	config_get enabled $1 enabled "0"
+	if [ "$enabled" -eq "1" ] ; then
+
+	cat <<-EOF >>$CONF/realm.extra
+realm $name {
+	format = $type
+	delimiter = $delimiter
+}
+EOF
+	else
+	
+	cat <<-EOF >>$CONF/realm.extra
+#realm $name {
+#	format = $type
+#	delimiter = $delimiter
+#}
+EOF
+	fi
+}
+
+append_realm()
+{
+
 }
 
 append_client()

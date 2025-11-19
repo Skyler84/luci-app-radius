@@ -1,3 +1,6 @@
+config settings
+	option password_storage 'clear'
+
 
 config client
 	option name 'localhost'
@@ -7,3 +10,19 @@ config client
 config user
 	option username 'example'
 	option password '12345678'
+
+config realm_format
+	option name 'username@domain'
+	option type 'suffix'
+	option delimiter '@'
+	option enabled '1'
+
+config realm
+	option match ''
+	option nostrip '0'
+	option mode 'proxy'
+	option upstream 'charlie'
+
+config upstream 'charlie'
+	option 
+

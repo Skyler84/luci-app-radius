@@ -2,7 +2,7 @@ local m, s, o, v
 
 m = Map("radius_manager", translate("Radius - Settings"), translate("General settings."))
 
-s = m:section(TypedSection, "settings", nil)
+s = m:section(NamedSection, "settings", "settings", nil)
 s.anonymous = true
 
 o = s:option(ListValue, "password_storage", translate("Password Storage Method"), translate("Choose how user passwords are stored in the Radius server. \nOnly new or updated passwords will be affected by this setting."))

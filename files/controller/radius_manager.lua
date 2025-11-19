@@ -18,6 +18,9 @@ function index()
         entry({"admin", "services", "radius_manager", "realms"},
                 cbi("radius_manager/realms"), _("Realms"), 30).leaf = true
 
+        entry({"admin", "services", "radius_manager", "servers"},
+                cbi("radius_manager/servers"), _("Servers"), 40).leaf = true
+
         entry({"admin", "services", "radius_manager", "settings"},
-                cbi("radius_manager/settings"), _("Settings"), 40).leaf = true
+                cbi("radius_manager/settings"), _("Settings"), 50).leaf = true
 end
