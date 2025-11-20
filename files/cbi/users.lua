@@ -13,7 +13,11 @@ s.template = "cbi/tblsection"
 s.addremove = true
 s.extedit = luci.dispatcher.build_url("admin", "services", "radius_manager", "users", "edit", "%s")
 
-s:option(DummyValue, "password", translate("Password"))
+o = s:option(Flag, "enabled", translate("Enabled"))
+o.default = o.disabled
+o.disabled = 0
+o.enabled = 1
+
 s:option(DummyValue, "password_updated", translate("Password Last Updated"))
 s:option(DummyValue, "password_type", translate("Password Type"))
 

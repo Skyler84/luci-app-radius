@@ -18,15 +18,13 @@ o = s:option(DummyValue, "enabled", translate("Enabled"))
 
 s = m:section(TypedSection, "realm", translate("Realms"))
 s.template = "cbi/tblsection"
-s.anonymous = true
+s.anonymous = false
 s.addremove = true
 s.extedit = luci.dispatcher.build_url("admin", "services", "radius_manager", "realms", "realm_edit", "%s")
 
-o = s:option(DummyValue, "name", translate("Name"))
-
+o = s:option(DummyValue, "match", translate("Matches"))
+o = s:option(Flag, "nostrip", translate("No Strip Realm"))
 o = s:option(DummyValue, "type", translate("Type"))
-
-o = s:option(DummyValue, "target", translate("Target Server"))
 
 
 

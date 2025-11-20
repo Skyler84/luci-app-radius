@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-radius-manager
-PKG_VERSION:=0.1
-PKG_RELEASE:=1-12
+PKG_VERSION:=0.2
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Skyler Mansfield <skyler.mansfield.21@gmail.com>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=LICENSE
@@ -35,9 +35,14 @@ define Package/luci-app-radius-manager/install
 	$(INSTALL_DATA) ./files/controller/radius_manager.lua $(1)/usr/lib/lua/luci/controller/radius_manager.lua
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi/radius_manager
 	$(INSTALL_DATA) ./files/cbi/clients.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/clients.lua
+	$(INSTALL_DATA) ./files/cbi/clients_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/clients_edit.lua
 	$(INSTALL_DATA) ./files/cbi/users.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/users.lua
+	$(INSTALL_DATA) ./files/cbi/users_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/users_edit.lua
 	$(INSTALL_DATA) ./files/cbi/realms.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/realms.lua
+	$(INSTALL_DATA) ./files/cbi/realms_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/realms_edit.lua
+	$(INSTALL_DATA) ./files/cbi/realms_format_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/realms_format_edit.lua
 	$(INSTALL_DATA) ./files/cbi/servers.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/servers.lua
+	$(INSTALL_DATA) ./files/cbi/servers_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/servers_edit.lua
 	$(INSTALL_DATA) ./files/cbi/settings.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/settings.lua
 endef
 

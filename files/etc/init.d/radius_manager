@@ -61,6 +61,8 @@ rebuild()
 	config_foreach append_client client
 	config_foreach append_user user
 	config_foreach append_realm_format realm_format
+	config_foreach append_realm realm
+	config_foreach append_server server
 	reload_radiusd
 }
 
@@ -70,6 +72,7 @@ clear_configure()
 	echo > $CONF/clients.extra
 	echo > $CONF/authorize.extra
 	echo > $CONF/realm.extra
+	echo > $CONF/proxy.extra
 }
 
 append_realm_format()
@@ -98,9 +101,60 @@ EOF
 	fi
 }
 
+generate_proxy_realm()
+{
+	local match nostrip target
+	match=$1
+	nostrip=$2
+	target=$3
+	echo -e "realm $match {"
+	echo -e "\tnostrip = $nostrip"
+	[ -z "$target" ] && echo -e "\tpool = LOCAL"
+	echo -e "}"
+
+}
+
 append_realm()
 {
+	local name match nostrip target
+	name=$1
+	config_get match $1 match
+	config_get_bool nostrip $1 nostrip false
+	config_get target $1 target
+	cat <(generate_proxy_realm "$match" "$nostrip" "$target") >>$CONF/proxy.extra
+}
 
+generate_server()
+{
+	local name host port secret type
+	name=$1
+	host=$2
+	port=$3
+	secret=$4
+	type=$5
+
+	echo -e "home_server $name {"
+	echo -e "\taddress = $host"
+	echo -e "\tport = $port"
+	echo -e "\tsecret = $secret"
+	echo -e "\ttype = $type"
+	echo -e "}"
+	echo -e "home_server_pool $name {"
+	echo -e "\ttype = fail-over"
+	echo -e "\thome_server = $name"
+	echo -e "}"
+}
+
+append_server()
+{
+	local name host port secret type
+	config_get name $1 name
+	config_get host $1 host
+	config_get port $1 port
+	config_get secret $1 secret
+	config_get type $1 type
+
+	cat <(generate_server "$name" "$host" "$port" "$secret" "$type") >>$CONF/proxy.extra
 }
 
 append_client()
@@ -119,20 +173,34 @@ client $name {
 EOF
 }
 
+generate_vlan_attributes()
+{
+	local vlan
+	vlan=$1
+	if [ ! -z "$vlan" ] ; then
+		echo -e "\tTunnel-Type = \"VLAN\","
+		echo -e "\tTunnel-Medium-Type = \"IEEE-802\","
+		echo -e "\tTunnel-Private-Group-Id = \"$vlan\""
+	fi
+}
+
 append_user()
 {
 	local username password rad_password
 	username=$1
 	config_get password $1 password
+	config_get_bool vlans_enabled $1 vlans_enabled false
 
 	if [ -z "$password" ]; then
 		config_get rad_password $1 rad_password ""
 	else
 		rad_password=$(generate_password "$password")
 	fi
-	cat <<-EOF >>$CONF/authorize.extra
-$username	$rad_password
-EOF
+	echo -e "$username\t$rad_password" >>$CONF/authorize.extra
+	if [ "$vlans_enabled" = "1" ] ; then
+		config_get vlan $1 vlan
+		cat <(generate_vlan_attributes $vlan) >>$CONF/authorize.extra
+	fi
     [ -z "$password" ] && return
 	uci -q delete $NAME.$1.password
 	uci set $NAME.$1.rad_password="$rad_password"

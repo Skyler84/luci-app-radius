@@ -13,4 +13,14 @@ o.rmempty = true
 o = s:option(DummyValue, "password_updated", translate("Password Last Updated"))
 o = s:option(DummyValue, "password_type", translate("Password Type"))
 
+o = s:option(Flag, "vlans_enabled", translate("VLANs Enabled"))
+o.default = o.disabled
+o.disabled = 0
+o.enabled = 1
+
+o = s:option(Value, "vlan", translate("VLAN"), translate("VLAN ID assigned to the user."))
+o.datatype = "uinteger"
+o.rmempty = false
+o:depends("vlans_enabled", "1")
+
 return m
