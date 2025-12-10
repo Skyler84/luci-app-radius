@@ -1,0 +1,105 @@
+name: Version Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'files/**'
+      - 'Makefile'
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get current version
+        id: current_version
+        run: |
+          VERSION=$(grep "PKG_VERSION:=" Makefile | cut -d'=' -f2)
+          RELEASE=$(grep "PKG_RELEASE:=" Makefile | cut -d'=' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "release=$RELEASE" >> $GITHUB_OUTPUT
+          echo "full_version=${VERSION}-${RELEASE}" >> $GITHUB_OUTPUT
+          echo "Current version: ${VERSION}-${RELEASE}"
+      
+      - name: Get base version (main branch)
+        id: base_version
+        run: |
+          git fetch origin main
+          git checkout origin/main -- Makefile
+          mv Makefile Makefile.base
+          git checkout HEAD -- Makefile
+          
+          BASE_VERSION=$(grep "PKG_VERSION:=" Makefile.base | cut -d'=' -f2)
+          BASE_RELEASE=$(grep "PKG_RELEASE:=" Makefile.base | cut -d'=' -f2)
+          echo "version=$BASE_VERSION" >> $GITHUB_OUTPUT
+          echo "release=$BASE_RELEASE" >> $GITHUB_OUTPUT
+          echo "full_version=${BASE_VERSION}-${BASE_RELEASE}" >> $GITHUB_OUTPUT
+          echo "Base version (main): ${BASE_VERSION}-${BASE_RELEASE}"
+          
+          rm Makefile.base
+      
+      - name: Compare versions
+        id: compare
+        run: |
+          CURRENT_VERSION="${{ steps.current_version.outputs.version }}"
+          CURRENT_RELEASE="${{ steps.current_version.outputs.release }}"
+          BASE_VERSION="${{ steps.base_version.outputs.version }}"
+          BASE_RELEASE="${{ steps.base_version.outputs.release }}"
+          
+          # Function to compare version strings
+          version_gt() {
+              test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"
+          }
+          
+          # Compare versions
+          VERSION_INCREASED=false
+          
+          if version_gt "$CURRENT_VERSION" "$BASE_VERSION"; then
+            VERSION_INCREASED=true
+            echo "✅ PKG_VERSION increased: $BASE_VERSION → $CURRENT_VERSION"
+          elif [ "$CURRENT_VERSION" = "$BASE_VERSION" ]; then
+            # Version same, check release number
+            if [ "$CURRENT_RELEASE" -gt "$BASE_RELEASE" ]; then
+              VERSION_INCREASED=true
+              echo "✅ PKG_RELEASE increased: $BASE_VERSION-$BASE_RELEASE → $CURRENT_VERSION-$CURRENT_RELEASE"
+            else
+              echo "❌ Version not increased!"
+              echo "   Base:    $BASE_VERSION-$BASE_RELEASE"
+              echo "   Current: $CURRENT_VERSION-$CURRENT_RELEASE"
+            fi
+          else
+            echo "❌ PKG_VERSION decreased!"
+            echo "   Base:    $BASE_VERSION-$BASE_RELEASE"
+            echo "   Current: $CURRENT_VERSION-$CURRENT_RELEASE"
+          fi
+          
+          echo "increased=$VERSION_INCREASED" >> $GITHUB_OUTPUT
+      
+      - name: Check result
+        if: steps.compare.outputs.increased != 'true'
+        run: |
+          echo "::error::Package version must be increased before merging to main!"
+          echo "::error::Current version: ${{ steps.current_version.outputs.full_version }}"
+          echo "::error::Base version: ${{ steps.base_version.outputs.full_version }}"
+          echo ""
+          echo "Please update PKG_VERSION or PKG_RELEASE in the Makefile."
+          echo ""
+          echo "Example version bump strategies:"
+          echo "  - Patch: 0.2-1 → 0.2-2"
+          echo "  - Minor: 0.2-1 → 0.3-1"
+          echo "  - Major: 0.2-1 → 1.0-1"
+          exit 1
+      
+      - name: Success message
+        if: steps.compare.outputs.increased == 'true'
+        run: |
+          echo "✅ Version check passed!"
+          echo "   Previous: ${{ steps.base_version.outputs.full_version }}"
+          echo "   New:      ${{ steps.current_version.outputs.full_version }}"

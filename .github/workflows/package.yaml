@@ -1,0 +1,30 @@
+name: Build Package
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+              
+      - name: Build package
+        run: make TOPDIR=${{ github.workspace }}/scripts/topdir INCLUDE_DIR=${{ github.workspace }}/scripts/includedir package/luci-app-radius-manager/clean package/luci-app-radius-manager/compile
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-radius-package
+          path: |
+              *.ipk
+              build/
+          if-no-files-found: warn

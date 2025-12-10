@@ -1,0 +1,135 @@
+name: Build and Publish Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+              
+      - name: Build package
+        run: make TOPDIR=${{ github.workspace }}/scripts/topdir INCLUDE_DIR=${{ github.workspace }}/scripts/includedir package/luci-app-radius-manager/clean package/luci-app-radius-manager/compile
+      
+      - name: Get package info
+        id: package_info
+        run: |
+          # Find the built IPK file
+          IPK_FILE=$(find . -name "*.ipk" -type f | head -n 1)
+          if [ -z "$IPK_FILE" ]; then
+            echo "Error: No IPK file found"
+            exit 1
+          fi
+          echo "ipk_file=$IPK_FILE" >> $GITHUB_OUTPUT
+          echo "ipk_name=$(basename $IPK_FILE)" >> $GITHUB_OUTPUT
+          
+          # Extract version from Makefile
+          VERSION=$(grep "PKG_VERSION:=" Makefile | cut -d'=' -f2)
+          RELEASE=$(grep "PKG_RELEASE:=" Makefile | cut -d'=' -f2)
+          echo "version=${VERSION}-${RELEASE}" >> $GITHUB_OUTPUT
+      
+      - name: Determine release type and tag
+        id: release_info
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # This is a tag push
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "release_name=Release ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            # This is a branch push (main)
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            TAG_NAME="dev-${SHORT_SHA}"
+            echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+            echo "release_name=Development Build ${SHORT_SHA}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          if [[ "${{ steps.release_info.outputs.is_prerelease }}" == "true" ]]; then
+            # For pre-release, use recent commits
+            NOTES="## Development Build
+          
+          **⚠️ This is an automated pre-release build from the main branch.**
+          
+          ### Recent Changes
+          $(git log -5 --pretty=format:'- %s (%h)' --no-merges)
+          
+          ### Build Information
+          - **Commit:** ${{ github.sha }}
+          - **Branch:** ${{ github.ref_name }}
+          - **Package Version:** ${{ steps.package_info.outputs.version }}
+          - **Built:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          else
+            # For release, try to get tag message or use commits since last tag
+            TAG_MSG=$(git tag -l --format='%(contents)' ${{ steps.release_info.outputs.tag_name }})
+            if [ -n "$TAG_MSG" ]; then
+              NOTES="$TAG_MSG"
+            else
+              PREV_TAG=$(git describe --tags --abbrev=0 ${{ steps.release_info.outputs.tag_name }}^ 2>/dev/null || echo "")
+              if [ -n "$PREV_TAG" ]; then
+                NOTES="## Changes since ${PREV_TAG}
+          
+          $(git log ${PREV_TAG}..${{ steps.release_info.outputs.tag_name }} --pretty=format:'- %s (%h)' --no-merges)"
+              else
+                NOTES="## Release ${{ steps.release_info.outputs.tag_name }}
+          
+          $(git log -10 --pretty=format:'- %s (%h)' --no-merges)"
+              fi
+            fi
+            NOTES="$NOTES
+          
+          ### Build Information
+          - **Package Version:** ${{ steps.package_info.outputs.version }}
+          - **Built:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          fi
+          
+          # Save to file to handle multiline content
+          echo "$NOTES" > release_notes.md
+      
+      - name: Delete existing pre-release if present
+        if: steps.release_info.outputs.is_prerelease == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Delete the tag and release if they exist (for pre-releases only)
+          gh release delete ${{ steps.release_info.outputs.tag_name }} --yes 2>/dev/null || true
+          git push origin :refs/tags/${{ steps.release_info.outputs.tag_name }} 2>/dev/null || true
+      
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ${{ steps.release_info.outputs.tag_name }} \
+            --title "${{ steps.release_info.outputs.release_name }}" \
+            --notes-file release_notes.md \
+            ${{ steps.release_info.outputs.is_prerelease == 'true' && '--prerelease' || '' }} \
+            ${{ steps.package_info.outputs.ipk_file }}
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-radius-release-${{ steps.release_info.outputs.tag_name }}
+          path: |
+            *.ipk
+            build/
+          if-no-files-found: warn
