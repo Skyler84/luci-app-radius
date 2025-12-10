@@ -1,0 +1,48 @@
+name: Line Endings Check
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-line-endings:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check for CRLF line endings
+      run: |
+        # Find files with CRLF line endings
+        # Exclude binary files and common directories that should be ignored
+        CRLF_FILES=$(find . -type f \
+          -not -path './.git/*' \
+          -not -path './node_modules/*' \
+          -not -path '*/.*' \
+          -not -name '*.ipk' \
+          -not -name '*.png' \
+          -not -name '*.jpg' \
+          -not -name '*.jpeg' \
+          -not -name '*.gif' \
+          -not -name '*.ico' \
+          -not -name '*.pdf' \
+          -not -name '*.zip' \
+          -not -name '*.tar' \
+          -not -name '*.gz' \
+          -exec file {} \; | \
+          grep 'CRLF' | \
+          cut -d: -f1)
+        
+        if [ -n "$CRLF_FILES" ]; then
+          echo "❌ The following files have CRLF line endings:"
+          echo "$CRLF_FILES"
+          echo ""
+          echo "Please convert these files to use LF line endings."
+          echo "You can fix this by running:"
+          echo "  dos2unix <filename>"
+          echo "Or use your editor to change line endings to LF (Unix)."
+          exit 1
+        else
+          echo "✅ All files have correct LF line endings."
+        fi
