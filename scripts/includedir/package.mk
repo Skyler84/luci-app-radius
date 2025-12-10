@@ -33,6 +33,8 @@ define Package/default/prerm
 default_prerm $$0 $$@
 endef
 
+convert_to_shell_name = $$(shell echo "$(1)" | tr 'A-Z' 'a-z' | tr -c 'a-z' '_')
+
 define PackageControlFile
 Package: ${PKG_NAME}
 Version: ${PKG_VERSION}-${PKG_RELEASE}
@@ -46,16 +48,36 @@ endef
 
 define BuildPackage
 $(eval $(call Package/$(1)))
+
+PKGFILE:=$(call convert_to_shell_name,Package_$(1)_ControlFile)
+define $$(PKGFILE)_CONTROL
+$(call PackageControlFile,$(1))
+endef
+define $$(PKGFILE)_CONFFILES
+$(call Package/$(1)/conffiles)
+endef
+define $$(PKGFILE)_POSTINST
+$(call Package/default/postinst)
+endef
+define $$(PKGFILE)_PRERM
+$(call Package/default/prerm)
+endef
+export $$(PKGFILE)_CONTROL
 package/$(1)/compile:
 	@echo "Building package: luci-app-radius"
 	mkdir -p $(call GetControlDir,$(1))
 	mkdir -p $(call GetRootDir,$(1))
 
-
-	$$(file >$(call GetControlDir,$(1))/control,$$(call PackageControlFile,$(1)))
-	$$(file >$(call GetControlDir,$(1))/conffiles,$$(call Package/$(1)/conffiles))
-	$$(file >$(call GetControlDir,$(1))/postinst,$$(call Package/default/postinst))
-	$$(file >$(call GetControlDir,$(1))/prerm,$$(call Package/default/prerm))
+	@ tempfile=$$(shell echo /tmp/$(1))
+	@ echo "$$$$$$(PKGFILE)_CONTROL" > $$$$(tempfile)
+	@ install -m 644 $$$$(tempfile) $(call GetControlDir,$(1))/control
+	@ echo "$$$$$$(PKGFILE)_CONFFILES" > $$$$(tempfile)
+	@ install -m 644 $$$$(tempfile) $(call GetControlDir,$(1))/conffiles
+	@ echo "$$$$$$(PKGFILE)_POSTINST" > $$$$(tempfile)
+	@ install -m 644 $$$$(tempfile) $(call GetControlDir,$(1))/postinst
+	@ echo "$$$$$$(PKGFILE)_PRERM" > $$$$(tempfile)
+	@ install -m 644 $$$$(tempfile) $(call GetControlDir,$(1))/prerm
+	rm -f $$$$(tempfile)
 
 
 	@mkdir -p $(call GetRootDir,$(1))
