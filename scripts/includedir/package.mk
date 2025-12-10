@@ -62,22 +62,28 @@ endef
 define $$(PKGFILE)_PRERM
 $(call Package/default/prerm)
 endef
+$$(PKGFILE)_TMP := $$(shell echo /tmp/$(1))
 export $$(PKGFILE)_CONTROL
+export $$(PKGFILE)_CONFFILES
+export $$(PKGFILE)_POSTINST
+export $$(PKGFILE)_PRERM
+export $$(PKGFILE)_TMP
+
 package/$(1)/compile:
 	@echo "Building package: luci-app-radius"
 	mkdir -p $(call GetControlDir,$(1))
 	mkdir -p $(call GetRootDir,$(1))
 
-	@ tempfile=$$(shell echo /tmp/$(1))
-	@ echo "$$$$$$(PKGFILE)_CONTROL" > $$$$(tempfile)
-	@ install -m 644 $$$$(tempfile) $(call GetControlDir,$(1))/control
-	@ echo "$$$$$$(PKGFILE)_CONFFILES" > $$$$(tempfile)
-	@ install -m 644 $$$$(tempfile) $(call GetControlDir,$(1))/conffiles
-	@ echo "$$$$$$(PKGFILE)_POSTINST" > $$$$(tempfile)
-	@ install -m 644 $$$$(tempfile) $(call GetControlDir,$(1))/postinst
-	@ echo "$$$$$$(PKGFILE)_PRERM" > $$$$(tempfile)
-	@ install -m 644 $$$$(tempfile) $(call GetControlDir,$(1))/prerm
-	rm -f $$$$(tempfile)
+	echo $$$$$$(PKGFILE)_TMP
+	echo "$$$$$$(PKGFILE)_CONTROL" > $$$$$$(PKGFILE)_TMP
+	install -m 644 $$$$$$(PKGFILE)_TMP $(call GetControlDir,$(1))/control
+	echo "$$$$$$(PKGFILE)_CONFFILES" > $$$$$$(PKGFILE)_TMP
+	install -m 644 $$$$$$(PKGFILE)_TMP $(call GetControlDir,$(1))/conffiles
+	echo "$$$$$$(PKGFILE)_POSTINST" > $$$$$$(PKGFILE)_TMP
+	install -m 755 $$$$$$(PKGFILE)_TMP $(call GetControlDir,$(1))/postinst
+	echo "$$$$$$(PKGFILE)_PRERM" > $$$$$$(PKGFILE)_TMP
+	install -m 755 $$$$$$(PKGFILE)_TMP $(call GetControlDir,$(1))/prerm
+	rm -f $$$$$$(PKGFILE)_TMP
 
 
 	@mkdir -p $(call GetRootDir,$(1))
