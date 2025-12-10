@@ -1,5 +1,5 @@
 define GetBuildDir
-build/$(1)
+${shell pwd}/build/$(1)
 endef
 
 define GetControlDir
@@ -94,7 +94,8 @@ package/$(1)/compile:
 	tar -cvf $(call GetOuterDir,$(1))/control.tar -C $(call GetControlDir,$(1)) --owner=0 --group=0 control conffiles
 	tar -uvf $(call GetOuterDir,$(1))/control.tar -C $(call GetControlDir,$(1)) --owner=0 --group=0 --mode=755 postinst prerm
 	gzip -f $(call GetOuterDir,$(1))/control.tar > $(call GetOuterDir,$(1))/control.tar.gz
-	tar -cvf $(call GetOuterDir,$(1))/data.tar  -C $(call GetRootDir,$(1)) --owner=0 --group=0 .
+	cd $(call GetRootDir,$(1)) && tar -cvf $(call GetOuterDir,$(1))/data.tar --owner=0 --group=0 .
+	cd $(call GetRootDir,$(1)) && tar -uvf $(call GetOuterDir,$(1))/data.tar --owner=0 --group=0 --mode=755 ./etc/init.d/*
 	gzip -f $(call GetOuterDir,$(1))/data.tar > $(call GetOuterDir,$(1))/data.tar.gz
 	tar -czvf $(1).ipk -C $(call GetOuterDir,$(1)) --owner=0 --group=0 --mode=644 ./data.tar.gz ./control.tar.gz ./debian-binary
 
