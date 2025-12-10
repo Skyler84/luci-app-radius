@@ -66,7 +66,6 @@ rebuild()
 	config_foreach append_realm_format realm_format
 	config_foreach append_realm realm
 	config_foreach append_server server
-	reload_radiusd
 }
 
 clear_configure()
