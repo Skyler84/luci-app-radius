@@ -1,4 +1,4 @@
-INSTALL_DIR := @mkdir -p
-INSTALL_CONF := @cp -p
-INSTALL_BIN := @cp -p
-INSTALL_DATA := @cp -p
+INSTALL_DIR := @install -d
+INSTALL_CONF := @install -m 600
+INSTALL_BIN := @install -m 755
+INSTALL_DATA := @install -m 644

@@ -63,11 +63,12 @@ package/$(1)/compile:
 
 	mkdir -p $(call GetOuterDir,$(1))
 	$$(file >$(call GetOuterDir,$(1))/debian-binary,"2.0")
-	tar -cvf $(call GetOuterDir,$(1))/control.tar -C $(call GetControlDir,$(1)) control conffiles
-	tar -uvf $(call GetOuterDir,$(1))/control.tar -C $(call GetControlDir,$(1)) --mode=755 postinst prerm
+	tar -cvf $(call GetOuterDir,$(1))/control.tar -C $(call GetControlDir,$(1)) --owner=0 --group=0 control conffiles
+	tar -uvf $(call GetOuterDir,$(1))/control.tar -C $(call GetControlDir,$(1)) --owner=0 --group=0 --mode=755 postinst prerm
 	gzip -f $(call GetOuterDir,$(1))/control.tar > $(call GetOuterDir,$(1))/control.tar.gz
-	tar -czvf $(call GetOuterDir,$(1))/data.tar.gz -C $(call GetRootDir,$(1)) .
-	tar -czvf $(1).ipk -C $(call GetOuterDir,$(1)) ./data.tar.gz ./control.tar.gz ./debian-binary
+	tar -cvf $(call GetOuterDir,$(1))/data.tar  -C $(call GetRootDir,$(1)) --owner=0 --group=0 .
+	gzip -f $(call GetOuterDir,$(1))/data.tar > $(call GetOuterDir,$(1))/data.tar.gz
+	tar -czvf $(1).ipk -C $(call GetOuterDir,$(1)) --owner=0 --group=0 --mode=644 ./data.tar.gz ./control.tar.gz ./debian-binary
 
 package/$(1)/clean:
 	@echo $(1) Cleaning
