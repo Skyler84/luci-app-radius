@@ -162,7 +162,7 @@ append_server()
 append_client()
 {
 	local name ipaddr secret
-	config_get name $1 name
+	name=$1
 	config_get ipaddr $1 ipaddr
 	config_get secret $1 secret
 
