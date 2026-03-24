@@ -15,10 +15,17 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential
+          sudo apt-get install -y build-essential meson ninja-build
+
+      - name: Build and install apk
+        run: |
+          git clone https://gitlab.alpinelinux.org/alpine/apk-tools.git
+          cd apk-tools
+          meson setup -Dc_link_args="-static" -Dprefer_static=true -Ddefault_library=static build
+          ninja -C build src/apk
               
       - name: Build package
-        run: make TOPDIR=${{ github.workspace }}/scripts/topdir INCLUDE_DIR=${{ github.workspace }}/scripts/includedir package/luci-app-radius-manager/clean package/luci-app-radius-manager/compile
+        run: make APK=${{ github.workspace }}/apk-tools/build/src/apk TOPDIR=${{ github.workspace }}/scripts/topdir INCLUDE_DIR=${{ github.workspace }}/scripts/includedir package/luci-app-radius-manager/clean package/luci-app-radius-manager/compile
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -26,5 +33,6 @@ jobs:
           name: luci-app-radius-package
           path: |
               *.ipk
+              *.apk
               build/
           if-no-files-found: warn
