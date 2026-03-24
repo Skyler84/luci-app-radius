@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-radius-manager
-PKG_VERSION:=0.4
-PKG_RELEASE:=2
+PKG_VERSION:=0.5
+PKG_RELEASE:=0
 PKG_MAINTAINER:=Skyler Mansfield <skyler.mansfield.21@gmail.com>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=LICENSE
@@ -31,26 +31,33 @@ define Package/luci-app-radius-manager/install
 	$(INSTALL_CONF) ./files/config/radius_manager $(1)/etc/config/radius_manager
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/radius_manager $(1)/etc/init.d/radius_manager
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller
-	$(INSTALL_DATA) ./files/controller/radius_manager.lua $(1)/usr/lib/lua/luci/controller/radius_manager.lua
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/model/cbi/radius_manager
-	$(INSTALL_DATA) ./files/cbi/clients.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/clients.lua
-	$(INSTALL_DATA) ./files/cbi/clients_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/clients_edit.lua
-	$(INSTALL_DATA) ./files/cbi/users.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/users.lua
-	$(INSTALL_DATA) ./files/cbi/users_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/users_edit.lua
-	$(INSTALL_DATA) ./files/cbi/realms.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/realms.lua
-	$(INSTALL_DATA) ./files/cbi/realms_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/realms_edit.lua
-	$(INSTALL_DATA) ./files/cbi/realms_format_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/realms_format_edit.lua
-	$(INSTALL_DATA) ./files/cbi/servers.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/servers.lua
-	$(INSTALL_DATA) ./files/cbi/servers_edit.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/servers_edit.lua
-	$(INSTALL_DATA) ./files/cbi/settings.lua $(1)/usr/lib/lua/luci/model/cbi/radius_manager/settings.lua
+	# New JavaScript-based views
+	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
+	$(INSTALL_DATA) ./files/usr/share/luci/menu.d/luci-app-radius-manager.json $(1)/usr/share/luci/menu.d/luci-app-radius-manager.json
+	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/radius_manager
+	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/clients.js $(1)/www/luci-static/resources/view/radius_manager/clients.js
+	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/users.js $(1)/www/luci-static/resources/view/radius_manager/users.js
+	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/realms.js $(1)/www/luci-static/resources/view/radius_manager/realms.js
+	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/servers.js $(1)/www/luci-static/resources/view/radius_manager/servers.js
+	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/settings.js $(1)/www/luci-static/resources/view/radius_manager/settings.js
 endef
 
 define Package/luci-app-radius-manager/postinst
 #!/bin/sh	
 [ ! -z "$${IPKG_INSTROOT}" ] && exit 0
 # check if freeradius authorize file includes our $$INCLUDE already
-
+FR3_CONFIG_DIR=/etc/freeradius3
+check_include()
+{
+	local filename incname
+	filename=$$1
+	incname=$$2
+	if [ ! -z $$(grep "\$$INCLUDE $$incname" $$filename) ]; then
+		echo "\$$INCLUDE $$incname" >> $$filename
+	fi
+}
+check_include $$FR3_CONFIG_DIR/mods-config/files/authorize $$FR3_CONFIG_DIR/authorize.extra
+check_include $$FR3_CONFIG_DIR/clients.conf $$FR3_CONFIG_DIR/clients.extra
 endef
 
 define Build/Compile

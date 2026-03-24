@@ -1,0 +1,54 @@
+{
+	"admin/services/radius_manager": {
+		"title": "Radius",
+		"order": 70,
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"fs": {
+				"/etc/config/radius_manager": "file"
+			}
+		}
+	},
+	"admin/services/radius_manager/users": {
+		"title": "Users",
+		"order": 10,
+		"action": {
+			"type": "view",
+			"path": "radius_manager/users"
+		}
+	},
+	"admin/services/radius_manager/clients": {
+		"title": "Clients",
+		"order": 20,
+		"action": {
+			"type": "view",
+			"path": "radius_manager/clients"
+		}
+	},
+	"admin/services/radius_manager/realms": {
+		"title": "Realms",
+		"order": 30,
+		"action": {
+			"type": "view",
+			"path": "radius_manager/realms"
+		}
+	},
+	"admin/services/radius_manager/servers": {
+		"title": "Servers",
+		"order": 40,
+		"action": {
+			"type": "view",
+			"path": "radius_manager/servers"
+		}
+	},
+	"admin/services/radius_manager/settings": {
+		"title": "Settings",
+		"order": 50,
+		"action": {
+			"type": "view",
+			"path": "radius_manager/settings"
+		}
+	}
+}
