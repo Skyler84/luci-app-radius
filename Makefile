@@ -35,11 +35,7 @@ define Package/luci-app-radius-manager/install
 	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
 	$(INSTALL_DATA) ./files/usr/share/luci/menu.d/luci-app-radius-manager.json $(1)/usr/share/luci/menu.d/luci-app-radius-manager.json
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/radius_manager
-	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/clients.js $(1)/www/luci-static/resources/view/radius_manager/clients.js
-	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/users.js $(1)/www/luci-static/resources/view/radius_manager/users.js
-	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/realms.js $(1)/www/luci-static/resources/view/radius_manager/realms.js
-	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/servers.js $(1)/www/luci-static/resources/view/radius_manager/servers.js
-	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/settings.js $(1)/www/luci-static/resources/view/radius_manager/settings.js
+	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/main.js $(1)/www/luci-static/resources/view/radius_manager/main.js
 endef
 
 define Package/luci-app-radius-manager/postinst
