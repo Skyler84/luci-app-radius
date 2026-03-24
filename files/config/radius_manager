@@ -2,13 +2,12 @@ config settings
 	option password_storage 'clear'
 
 
-config client
+config client 'localhost'
 	option name 'localhost'
 	option ipaddr '127.0.0.1'
 	option secret 'testing123'
 
-config user
-	option username 'example'
+config user 'example'
 	option password '12345678'
 
 config realm_format
@@ -22,7 +21,3 @@ config realm
 	option nostrip '0'
 	option mode 'proxy'
 	option upstream 'charlie'
-
-config upstream 'charlie'
-	option 
-

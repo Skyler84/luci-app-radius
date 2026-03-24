@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-radius-manager
 PKG_VERSION:=0.5
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Skyler Mansfield <skyler.mansfield.21@gmail.com>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=LICENSE
@@ -36,6 +36,9 @@ define Package/luci-app-radius-manager/install
 	$(INSTALL_DATA) ./files/usr/share/luci/menu.d/luci-app-radius-manager.json $(1)/usr/share/luci/menu.d/luci-app-radius-manager.json
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/radius_manager
 	$(INSTALL_DATA) ./files/www/luci-static/resources/view/radius_manager/main.js $(1)/www/luci-static/resources/view/radius_manager/main.js
+	# RPCd ACL for UCI access permissions
+	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
+	$(INSTALL_DATA) ./files/usr/share/rpcd/acl.d/luci-app-radius-manager.json $(1)/usr/share/rpcd/acl.d/luci-app-radius-manager.json
 endef
 
 define Package/luci-app-radius-manager/postinst
@@ -45,11 +48,12 @@ define Package/luci-app-radius-manager/postinst
 FR3_CONFIG_DIR=/etc/freeradius3
 check_include()
 {
-	local filename incname
+	local filename incname match
 	filename=$$1
 	incname=$$2
-	if [ ! -z $$(grep "\$$INCLUDE $$incname" $$filename) ]; then
-		echo "\$$INCLUDE $$incname" >> $$filename
+	match=$$(grep "\$$INCLUDE $$incname" $$filename)
+	if [ ! -z "$$match" ]; then
+		echo "\$$INCLUDE $$incname # Comment this line to disable." >> $$filename
 	fi
 }
 check_include $$FR3_CONFIG_DIR/mods-config/files/authorize $$FR3_CONFIG_DIR/authorize.extra
@@ -59,6 +63,7 @@ endef
 define Build/Compile
 endef
 
+# $(info $(call BuildPackage,luci-app-radius-manager))
 $(eval $(call BuildPackage,luci-app-radius-manager))
 
 
